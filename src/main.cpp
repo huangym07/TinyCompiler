@@ -9,7 +9,7 @@ void print_error_info(const std::string &s, const std::vector<int> &error_info) 
     for (decltype(error_info.size()) i = 0;
         i != error_info.size(); ++i) {
         if (error_info[i]) {
-            std::cout << "下标为 " << i << " 的字符 " << s[i] << " 无法识别" << '\n';
+            std::cout << "The character " << s[i] << " at index " << i << " can not be recognized." << '\n';
         }
     }
 }
@@ -21,7 +21,7 @@ void print_tokens(const std::vector<parser::Token> &tokens) {
         } else if (token.type == parser::TokenType::OPERATOR) {
             std::cout << "(" << token.type << ", " << static_cast<char>(token.value) << ")" << '\n';
         } else {
-            assert(1); // 不应该到达这里
+            assert(1); // Shouldn't be here
         }
     }
 }
@@ -40,7 +40,7 @@ void test_lex_success() {
         const auto &tokens = lexer.get_tokens();
         print_tokens(tokens);
     } else {
-        assert(1); // 不应该运行到这里
+        assert(1); // Shouldn't be here
     }
 }
 
@@ -55,7 +55,7 @@ void test_lex_fail() {
     bool success = lexer.lex_entire_string(s);
 
     if (success) {
-        assert(1); // 不应该运行到这里
+        assert(1); // Shouldn't be here
     } else {
         const auto &error_info = lexer.get_error_info();
         print_error_info(s, error_info);
@@ -65,7 +65,7 @@ void test_lex_fail() {
 void test_lex_from_stdin() {
     std::cout << "----- " << __func__ << " -----" << std::endl;
 
-    std::cout << "请输入要进行词法解析的字符串： " << std::endl;
+    std::cout << "Please enter the string to be lexically analyzed: " << std::endl;
     std::string s;
     std::string response;
 
@@ -84,7 +84,7 @@ void test_lex_from_stdin() {
             print_error_info(s, error_info);
         }
 
-        std::cout << "是否继续？Enter yes or no: " << std::endl;
+        std::cout << "Continue? Enter yes or no: " << std::endl;
         std::cin >> response;
         if (!std::cin || tolower(response[0]) == 'n') {
             break;
