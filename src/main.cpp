@@ -21,7 +21,7 @@ void print_tokens(const std::vector<parser::Token> &tokens) {
         } else if (token.type == parser::TokenType::OPERATOR) {
             std::cout << "(" << token.type << ", " << static_cast<char>(token.value) << ")" << '\n';
         } else {
-            assert(1); // Shouldn't be here
+            assert(0); // Shouldn't be here
         }
     }
 }
@@ -40,7 +40,7 @@ void test_lex_success() {
         const auto &tokens = lexer.get_tokens();
         print_tokens(tokens);
     } else {
-        assert(1); // Shouldn't be here
+        assert(0); // Shouldn't be here
     }
 }
 
@@ -55,7 +55,7 @@ void test_lex_fail() {
     bool success = lexer.lex_entire_string(s);
 
     if (success) {
-        assert(1); // Shouldn't be here
+        assert(0); // Shouldn't be here
     } else {
         const auto &error_info = lexer.get_error_info();
         print_error_info(s, error_info);
