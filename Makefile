@@ -6,20 +6,21 @@ INCLUDE_DIR = $(abspath ./include)
 INCLUDE_PATH = $(INCLUDE_DIR)
 
 BUILD_DIR = $(abspath ./build)
-
 $(shell mkdir -p $(BUILD_DIR))
-
 
 SRCS = $(shell find $(SRC_DIR) -name "*.cpp")
 
 BIN = $(BUILD_DIR)/tiny_parser
 
 
+CXX_FLAGS = -std=c++11 -I$(INCLUDE_PATH)
+
+
 default: $(BIN)
 .PHONY: default
 
 $(BIN): $(SRCS)
-	$(CC) -I$(INCLUDE_PATH) -o $@ $^
+	$(CC) $(CXX_FLAGS) -o $@ $^
 
 run: $(BIN)
 	$(BIN)
