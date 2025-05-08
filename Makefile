@@ -13,7 +13,7 @@ SRCS = $(shell find $(SRC_DIR) -name "*.cpp")
 BIN = $(BUILD_DIR)/tiny_parser
 
 
-CXX_FLAGS = -std=c++11 -I$(INCLUDE_PATH)
+CXX_FLAGS = -std=c++11 -I$(INCLUDE_PATH) -DNDEBUG
 
 
 default: $(BIN)
@@ -23,6 +23,10 @@ $(BIN): $(SRCS)
 	$(CC) $(CXX_FLAGS) -o $@ $^
 
 run: $(BIN)
+	$(BIN)
+
+debug_run: $(SRCS)
+	$(CC) -std=c++11 -I$(INCLUDE_DIR) -o $(BIN) $^
 	$(BIN)
 
 clean: 
