@@ -78,6 +78,8 @@ namespace frontend {
         // token 无法匹配则记录错误 token 位置，丢弃 token，尝试下一个 token
         std::vector<CstNode>::size_type CreateNode(const CstNodeType &type);
 
+        void PrintTree(std::vector<CstNode>::size_type, int depth, bool is_last) const;
+
     private:
         std::vector<Token> tokens_;
         std::vector<Token>::size_type current_token_index_;

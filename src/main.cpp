@@ -63,7 +63,7 @@ void test_parse_success() {
     frontend::Parser parser(lexer.get_tokens());
     if (parser.success()) {
         std::cout << "parse success" << std::endl;
-        // parser.show_cst();
+        parser.show_cst();
     } else {
         assert(0); // Shouldn't be here.
     }

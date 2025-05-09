@@ -221,4 +221,28 @@ namespace frontend {
 
         return cst_.size() - 1;
     }
+
+    void Parser::show_cst() const {
+        if (parse_success) {
+            std::cout << "Concrete Syntax Tree: " << std::endl;
+            PrintTree(cst_root_index_, 0, false);
+        } else {
+            std::cout << "Parse failed." << std::endl;
+        }
+    }
+    void Parser::PrintTree(std::vector<CstNode>::size_type index, int depth = 0, bool is_last = false) const {
+        std::string indent = (depth > 0) ? std::string((depth - 1) * 6, ' ') : "";
+        std::cout << indent;
+        
+        if (depth > 0) {
+            std::cout << (is_last ? "+-- " : "|-- ");
+        }
+        
+        const CstNode &node = cst_[index];
+        std::cout << node << std::endl;
+        
+        for (decltype(node.son_node_indexs_.size()) i = 0; i != node.son_node_indexs_.size(); ++i) {
+            PrintTree(node.son_node_indexs_[i], depth + 1, i + 1 == node.son_node_indexs_.size());
+        }
+    }
 }

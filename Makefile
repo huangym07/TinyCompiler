@@ -13,20 +13,21 @@ SRCS = $(shell find $(SRC_DIR) -name "*.cpp")
 BIN = $(BUILD_DIR)/tiny_parser
 
 
-CXX_FLAGS = -std=c++11 -I$(INCLUDE_PATH) -DNDEBUG
+CXX_FLAGS_RELEASE = -std=c++11 -I$(INCLUDE_PATH) -DNDEBUG
+CXX_FLAGS_DEBUG = -std=c++11 -I$(INCLUDE_PATH)
 
 
 default: $(BIN)
 .PHONY: default
 
 $(BIN): $(SRCS)
-	$(CC) $(CXX_FLAGS) -o $@ $^
+	$(CC) $(CXX_FLAGS_RELEASE) -o $@ $^
 
 run: $(BIN)
 	$(BIN)
 
 debug_run: $(SRCS)
-	$(CC) -std=c++11 -I$(INCLUDE_DIR) -o $(BIN) $^
+	$(CC) $(CXX_FLAGS_DEBUG) -o $(BIN) $^
 	$(BIN)
 
 clean: 
