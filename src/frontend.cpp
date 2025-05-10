@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <string>
 #include <cctype>
 #include <cassert>
@@ -111,24 +112,24 @@ namespace frontend {
         : tokens_(tokens), current_token_index_(0),  error_info_(tokens.size() + 1, 0), parse_success(true) {
         // 在词法分析得到的 token 序列最后，添加 end token 用来使语法分析正确停止
         tokens_.push_back({TokenType::END, '#'});
-        cst_root_index_ = CreateNode(CstNodeType::E);
+        cst_root_ = CreateNode(CstNodeType::E);
     }
 
-    std::vector<CstNode>::size_type Parser::CreateNode(const CstNodeType &type) {
+    std::unique_ptr<CstNode> Parser::CreateNode(const CstNodeType &type) {
         assert(current_token_index_ <= tokens_.size());
 
-        CstNode cst_node;
-        cst_node.type_ = type;
+        std::unique_ptr<CstNode> cst_node(new CstNode);
+        cst_node->type_ = type;
 
-        bool success = true;
-        while (current_token_index_ != tokens_.size()) {
+        bool success = false;
+        while (current_token_index_ != tokens_.size() && !success) {
             success = true;
             const Token &token = tokens_[current_token_index_];
             switch (type) {
                 case CstNodeType::E: {
                     if (token.type_ == TokenType::INTEGER) {        // E->TA
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::T));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::A));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::T));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::A));
                     } else {
                         success = false;
                     }
@@ -137,11 +138,11 @@ namespace frontend {
 
                 case CstNodeType::A: {
                     if (token.type_ == TokenType::PLUS || token.type_ == TokenType::MINUS) {        // A->+TA or A->-TA
-                        cst_node.son_node_indexs_.push_back(CreateNode(token.type_ == TokenType::PLUS ? CstNodeType::PLUS : CstNodeType::MINUS));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::T));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::A));
+                        cst_node->children_.push_back(CreateNode(token.type_ == TokenType::PLUS ? CstNodeType::PLUS : CstNodeType::MINUS));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::T));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::A));
                     } else if (token.type_ == TokenType::END) {                                      // A->\epsilon
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::EMPTY));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::EMPTY));
                     } else {
                         success = false;
                     }
@@ -150,12 +151,12 @@ namespace frontend {
 
                 case CstNodeType::B: {
                     if (token.type_ == TokenType::TIMES || token.type_ == TokenType::DIVIDE) {      // B->*FB or B->/FB
-                        cst_node.son_node_indexs_.push_back(CreateNode(token.type_ == TokenType::TIMES ? CstNodeType::TIMES : CstNodeType::DIVIDE));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::F));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::B));
+                        cst_node->children_.push_back(CreateNode(token.type_ == TokenType::TIMES ? CstNodeType::TIMES : CstNodeType::DIVIDE));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::F));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::B));
                     } else if (token.type_ == TokenType::PLUS || token.type_ == TokenType::MINUS 
                         || token.type_ == TokenType::END) {                                         // B->\epsilon
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::EMPTY));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::EMPTY));
                     } else {
                         success = false;
                     }
@@ -164,7 +165,7 @@ namespace frontend {
 
                 case CstNodeType::F: {
                     if (token.type_ == TokenType::INTEGER) {        // F->i
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::INTEGER));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::INTEGER));
                     } else {
                         success = false;
                     }
@@ -173,8 +174,8 @@ namespace frontend {
 
                 case CstNodeType::T: {
                     if (token.type_ == TokenType::INTEGER) {        // T->i
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::F));
-                        cst_node.son_node_indexs_.push_back(CreateNode(CstNodeType::B));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::F));
+                        cst_node->children_.push_back(CreateNode(CstNodeType::B));
                     } else {
                         success = false;
                     }
@@ -191,7 +192,7 @@ namespace frontend {
                         ||  (token.type_ == TokenType::TIMES && type == CstNodeType::TIMES)
                         ||  (token.type_ == TokenType::DIVIDE && type == CstNodeType::DIVIDE)
                         ||  (token.type_ == TokenType::INTEGER && type == CstNodeType::INTEGER)) {          // Current token matches token type
-                        cst_node.token_ = token;
+                        cst_node->token_ = token;
                         ++current_token_index_;
                     } else {            // Doesn't match.
                         success = false;
@@ -209,28 +210,28 @@ namespace frontend {
                     break;
             }
 
-            if (success) {
-                cst_.push_back(cst_node);
-                break;
-            } else {
+            if (!success) {
                 parse_success = false;
                 error_info_[current_token_index_] = 1;
                 ++current_token_index_;
             }
         }
 
-        return cst_.size() - 1;
+        if (success) return cst_node;
+        return nullptr;
     }
 
     void Parser::show_cst() const {
         if (parse_success) {
             std::cout << "Concrete Syntax Tree: " << std::endl;
-            PrintTree(cst_root_index_, 0, false);
+            if (cst_root_) PrintTree(cst_root_, 0, false);
+            else assert(0); // Should be here.
         } else {
             std::cout << "Parse failed." << std::endl;
         }
     }
-    void Parser::PrintTree(std::vector<CstNode>::size_type index, int depth = 0, bool is_last = false) const {
+    void Parser::PrintTree(const std::unique_ptr<CstNode> &node, int depth = 0, bool is_last = false) const {
+        if (!node) assert(0); // Shouldn't be nullptr.
         std::string indent = (depth > 0) ? std::string((depth - 1) * 6, ' ') : "";
         std::cout << indent;
         
@@ -238,11 +239,10 @@ namespace frontend {
             std::cout << (is_last ? "+-- " : "|-- ");
         }
         
-        const CstNode &node = cst_[index];
-        std::cout << node << std::endl;
+        std::cout << *node << std::endl;
         
-        for (decltype(node.son_node_indexs_.size()) i = 0; i != node.son_node_indexs_.size(); ++i) {
-            PrintTree(node.son_node_indexs_[i], depth + 1, i + 1 == node.son_node_indexs_.size());
+        for (decltype(node->children_.size()) i = 0; i != node->children_.size(); ++i) {
+            PrintTree(node->children_[i], depth + 1, i + 1 == node->children_.size());
         }
     }
 }

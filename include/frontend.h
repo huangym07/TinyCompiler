@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace frontend {
     enum class TokenType {
@@ -59,7 +60,7 @@ namespace frontend {
         CstNode() = default;
     public:
         CstNodeType type_;
-        std::vector<std::vector<CstNode>::size_type> son_node_indexs_;
+        std::vector<std::unique_ptr<CstNode>> children_;
         Token token_;
     };
 
@@ -73,19 +74,16 @@ namespace frontend {
         bool success() const { return parse_success; }
 
     private:
-        // Create a cst node
-        // return the node index
         // token 无法匹配则记录错误 token 位置，丢弃 token，尝试下一个 token
-        std::vector<CstNode>::size_type CreateNode(const CstNodeType &type);
+        std::unique_ptr<CstNode> CreateNode(const CstNodeType &type);
 
-        void PrintTree(std::vector<CstNode>::size_type, int depth, bool is_last) const;
+        void PrintTree(const std::unique_ptr<CstNode> &node, int depth, bool is_last) const;
 
     private:
         std::vector<Token> tokens_;
         std::vector<Token>::size_type current_token_index_;
 
-        std::vector<CstNode> cst_;
-        std::vector<CstNode>::size_type cst_root_index_;
+        std::unique_ptr<CstNode> cst_root_;
 
         std::vector<int> error_info_;
 
